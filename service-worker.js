@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vas-dor-v1';
+const CACHE_NAME = 'vas-dor-v2';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -37,11 +37,10 @@ self.addEventListener('activate', event => {
 
 // Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', event => {
-  // Skip Formspree API calls (let them go to network)
-  if (event.request.url.includes('formspree.io')) {
+  // Never cache POST requests or Google Apps Script calls — they must hit the network
+  if (event.request.method !== 'GET' || event.request.url.includes('script.google.com')) {
     event.respondWith(
       fetch(event.request).catch(() => {
-        // If network fails, create a stub response
         return new Response(JSON.stringify({ status: 'offline' }), {
           headers: { 'Content-Type': 'application/json' }
         });
