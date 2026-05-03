@@ -26,9 +26,51 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
         .vas-gradient { background: linear-gradient(90deg, #10B981 0%, #F59E0B 50%, #EF4444 100%); }
-        .vas-circle-dragging { box-shadow: 0 0 20px rgba(39, 170, 225, 0.6); }
-        .body-region-active { fill: #27AAE1; opacity: 0.7; }
-        .body-region-hover { opacity: 0.5; cursor: pointer; transition: opacity 0.2s; }
+        .body-region { fill: #B9D4E2; stroke: #044767; stroke-width: 1.5; cursor: pointer; transition: fill 0.2s; }
+        .body-region:hover { fill: #27AAE1; }
+        .body-region.selected { fill: #EF4444; }
+        /* VAS Slider — explicit cross-browser styling so iOS Safari renders it */
+        .vas-slider {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 14px;
+            border-radius: 7px;
+            background: linear-gradient(90deg, #10B981 0%, #F59E0B 50%, #EF4444 100%);
+            outline: none;
+            margin: 12px 0 8px 0;
+            padding: 0;
+            border: none;
+        }
+        .vas-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #044767;
+            border: 4px solid white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+            cursor: pointer;
+        }
+        .vas-slider::-moz-range-thumb {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #044767;
+            border: 4px solid white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+            cursor: pointer;
+        }
+        .vas-slider::-moz-range-track {
+            height: 14px;
+            border-radius: 7px;
+            background: linear-gradient(90deg, #10B981 0%, #F59E0B 50%, #EF4444 100%);
+            border: none;
+        }
+        .vas-slider:focus { outline: none; }
+        .vas-tick-row { display: flex; justify-content: space-between; padding: 0 6px; font-size: 11px; color: #6B7280; font-weight: 600; }
     </style>
 </head>
 <body class="bg-galvao-light text-galvao-dark">
@@ -158,18 +200,19 @@
 
                 <!-- VAS Gradient Bar -->
                 <div class="bg-white rounded-lg p-6 shadow mb-6">
-                    <div class="vas-gradient h-4 rounded-full mb-4"></div>
-                    <p class="text-center text-xs text-gray-600 mb-4">Arraste ou toque para avaliar</p>
-
                     <!-- Emoji + Big Score -->
-                    <div class="text-center mb-6">
+                    <div class="text-center mb-4">
                         <div class="text-6xl mb-2" id="emoji-display">😊</div>
                         <div class="text-5xl font-bold text-galvao-sky" id="vas-score-display">0</div>
                         <p class="text-gray-600 text-sm">/ 10</p>
                     </div>
 
-                    <!-- VAS Slider Canvas -->
-                    <canvas id="vas-canvas" width="300" height="80" class="w-full border border-gray-300 rounded-lg bg-white" style="max-width: 100%; height: auto;"></canvas>
+                    <!-- VAS Slider (styled HTML5 range input) -->
+                    <input type="range" id="vas-input" min="0" max="10" step="1" value="0" class="vas-slider" aria-label="Intensidade da dor de 0 a 10">
+                    <div class="vas-tick-row">
+                        <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
+                    </div>
+                    <p class="text-center text-xs text-gray-600 mt-3">Arraste o círculo para avaliar sua dor</p>
                 </div>
 
                 <!-- Notes -->
@@ -199,47 +242,47 @@
                     <!-- Simple Body Diagram -->
                     <svg id="body-diagram" viewBox="0 0 200 400" class="w-full max-w-sm mx-auto" style="border: 1px solid #ddd; border-radius: 8px;">
                         <!-- Head -->
-                        <circle cx="100" cy="40" r="25" class="body-region body-region-hover" data-region="cabeça" stroke="#999" stroke-width="2"/>
-                        
+                        <circle cx="100" cy="40" r="25" class="body-region" data-region="cabeça"/>
+
                         <!-- Neck -->
-                        <rect x="95" y="65" width="10" height="15" class="body-region body-region-hover" data-region="pescoço" stroke="#999" stroke-width="2"/>
-                        
+                        <rect x="95" y="65" width="10" height="15" class="body-region" data-region="pescoço"/>
+
                         <!-- Shoulders -->
-                        <rect x="60" y="80" width="20" height="15" class="body-region body-region-hover" data-region="ombro esquerdo" stroke="#999" stroke-width="2"/>
-                        <rect x="120" y="80" width="20" height="15" class="body-region body-region-hover" data-region="ombro direito" stroke="#999" stroke-width="2"/>
-                        
+                        <rect x="60" y="80" width="20" height="15" class="body-region" data-region="ombro esquerdo"/>
+                        <rect x="120" y="80" width="20" height="15" class="body-region" data-region="ombro direito"/>
+
                         <!-- Chest -->
-                        <rect x="80" y="100" width="40" height="30" class="body-region body-region-hover" data-region="peito" stroke="#999" stroke-width="2"/>
-                        
+                        <rect x="80" y="100" width="40" height="30" class="body-region" data-region="peito"/>
+
                         <!-- Upper Arms -->
-                        <rect x="50" y="100" width="15" height="40" class="body-region body-region-hover" data-region="braço esquerdo" stroke="#999" stroke-width="2"/>
-                        <rect x="135" y="100" width="15" height="40" class="body-region body-region-hover" data-region="braço direito" stroke="#999" stroke-width="2"/>
-                        
+                        <rect x="50" y="100" width="15" height="40" class="body-region" data-region="braço esquerdo"/>
+                        <rect x="135" y="100" width="15" height="40" class="body-region" data-region="braço direito"/>
+
                         <!-- Forearms/Wrists -->
-                        <rect x="50" y="140" width="15" height="35" class="body-region body-region-hover" data-region="punho esquerdo" stroke="#999" stroke-width="2"/>
-                        <rect x="135" y="140" width="15" height="35" class="body-region body-region-hover" data-region="punho direito" stroke="#999" stroke-width="2"/>
-                        
+                        <rect x="50" y="140" width="15" height="35" class="body-region" data-region="punho esquerdo"/>
+                        <rect x="135" y="140" width="15" height="35" class="body-region" data-region="punho direito"/>
+
                         <!-- Abdomen -->
-                        <rect x="80" y="130" width="40" height="40" class="body-region body-region-hover" data-region="abdômen" stroke="#999" stroke-width="2"/>
-                        
+                        <rect x="80" y="130" width="40" height="40" class="body-region" data-region="abdômen"/>
+
                         <!-- Lower Back (behind) -->
-                        <rect x="80" y="170" width="40" height="40" class="body-region body-region-hover" data-region="costas" stroke="#999" stroke-width="2"/>
-                        
+                        <rect x="80" y="170" width="40" height="40" class="body-region" data-region="costas"/>
+
                         <!-- Hips -->
-                        <rect x="65" y="210" width="15" height="25" class="body-region body-region-hover" data-region="quadril esquerdo" stroke="#999" stroke-width="2"/>
-                        <rect x="120" y="210" width="15" height="25" class="body-region body-region-hover" data-region="quadril direito" stroke="#999" stroke-width="2"/>
-                        
+                        <rect x="65" y="210" width="15" height="25" class="body-region" data-region="quadril esquerdo"/>
+                        <rect x="120" y="210" width="15" height="25" class="body-region" data-region="quadril direito"/>
+
                         <!-- Thighs/Knees -->
-                        <rect x="65" y="235" width="15" height="50" class="body-region body-region-hover" data-region="joelho esquerdo" stroke="#999" stroke-width="2"/>
-                        <rect x="120" y="235" width="15" height="50" class="body-region body-region-hover" data-region="joelho direito" stroke="#999" stroke-width="2"/>
-                        
+                        <rect x="65" y="235" width="15" height="50" class="body-region" data-region="joelho esquerdo"/>
+                        <rect x="120" y="235" width="15" height="50" class="body-region" data-region="joelho direito"/>
+
                         <!-- Lower Legs -->
-                        <rect x="65" y="285" width="15" height="50" class="body-region body-region-hover" data-region="perna esquerda" stroke="#999" stroke-width="2"/>
-                        <rect x="120" y="285" width="15" height="50" class="body-region body-region-hover" data-region="perna direita" stroke="#999" stroke-width="2"/>
-                        
+                        <rect x="65" y="285" width="15" height="50" class="body-region" data-region="perna esquerda"/>
+                        <rect x="120" y="285" width="15" height="50" class="body-region" data-region="perna direita"/>
+
                         <!-- Feet -->
-                        <rect x="65" y="335" width="15" height="25" class="body-region body-region-hover" data-region="pé esquerdo" stroke="#999" stroke-width="2"/>
-                        <rect x="120" y="335" width="15" height="25" class="body-region body-region-hover" data-region="pé direito" stroke="#999" stroke-width="2"/>
+                        <rect x="65" y="335" width="15" height="25" class="body-region" data-region="pé esquerdo"/>
+                        <rect x="120" y="335" width="15" height="25" class="body-region" data-region="pé direito"/>
                     </svg>
                 </div>
 
