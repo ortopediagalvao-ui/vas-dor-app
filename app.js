@@ -138,7 +138,20 @@ function openRegionVASModal(regionName) {
             delete appState.selectedRegions[regionName];
         }
         updateRegionsList();
+        updateBodySvgSelection();
     }
+}
+
+// Sync the SVG's visual highlighting with appState.selectedRegions
+function updateBodySvgSelection() {
+    document.querySelectorAll('.body-region').forEach(el => {
+        const region = el.getAttribute('data-region');
+        if (appState.selectedRegions[region]) {
+            el.classList.add('selected');
+        } else {
+            el.classList.remove('selected');
+        }
+    });
 }
 
 function updateRegionsList() {
@@ -164,6 +177,7 @@ function updateRegionsList() {
 function deleteRegion(regionName) {
     delete appState.selectedRegions[regionName];
     updateRegionsList();
+    updateBodySvgSelection();
 }
 
 // ===== REVIEW SCREEN =====
@@ -244,17 +258,22 @@ async function submitMeasurement() {
 }
 
 function resetApp() {
+    // Preserve measurements history; reset everything patient-specific
+    const measurementsHistory = appState.measurements || [];
     appState = {
-        ...appState,
+        currentScreen: 'onboarding',
         patientName: '',
         patientAge: '',
         patientGender: '',
         vasScore: 0,
         generalNotes: '',
         selectedRegions: {},
-        consentGiven: false
+        trackingId: '',          // critical: each patient gets a fresh ID
+        consentGiven: false,
+        measurements: measurementsHistory
     };
-    
+    saveToLocalStorage();
+
     // Clear form inputs
     document.getElementById('patient-name').value = '';
     document.getElementById('patient-age').value = '';
@@ -262,14 +281,19 @@ function resetApp() {
     document.getElementById('general-notes').value = '';
     document.getElementById('consent-checkbox').checked = false;
     document.getElementById('regions-container').innerHTML = '<p class="text-xs text-gray-500">Nenhuma região selecionada</p>';
-    
-    // Reset VAS
+
+    // Clear the visual "selected" highlighting on every body-region in the SVG
+    document.querySelectorAll('.body-region.selected').forEach(el => el.classList.remove('selected'));
+
+    // Reset VAS slider to 0
+    const vasInput = document.getElementById('vas-input');
+    if (vasInput) vasInput.value = 0;
     initVASCanvas();
-    
-    // Reset message
+
+    // Reset submit button + message
     document.getElementById('submit-message').classList.add('hidden');
     document.getElementById('submit-btn').textContent = '💾 Salvar Medição';
-    
+
     showScreen('onboarding');
 }
 
@@ -354,8 +378,17 @@ function saveToLocalStorage() {
 }
 
 function loadFromLocalStorage() {
+    // Restore ONLY the measurements history — never in-progress patient form data.
+    // This ensures each new patient on a shared device starts with a clean slate.
     const saved = localStorage.getItem('vasAppState');
     if (saved) {
-        appState = { ...appState, ...JSON.parse(saved) };
+        try {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed.measurements)) {
+                appState.measurements = parsed.measurements;
+            }
+        } catch (e) {
+            console.warn('Could not parse saved state:', e);
+        }
     }
 }
