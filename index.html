@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="VAS Dor - Avaliação de Dor com Escala Visual Analógica">
+    <meta name="theme-color" content="#044767">
+    <title>VAS Dor - Galvão Ortopedia</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'galvao-dark': '#044767',
+                        'galvao-tan': '#C49A6C',
+                        'galvao-sky': '#27AAE1',
+                        'galvao-light': '#F5F5F5',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .vas-gradient { background: linear-gradient(90deg, #10B981 0%, #F59E0B 50%, #EF4444 100%); }
+        .vas-circle-dragging { box-shadow: 0 0 20px rgba(39, 170, 225, 0.6); }
+        .body-region-active { fill: #27AAE1; opacity: 0.7; }
+        .body-region-hover { opacity: 0.5; cursor: pointer; transition: opacity 0.2s; }
+    </style>
+</head>
+<body class="bg-galvao-light text-galvao-dark">
+    <div id="app" class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-galvao-dark text-white p-4 flex items-center justify-center shadow-lg">
+            <div class="flex flex-col items-center">
+                <h1 class="text-xl font-bold">VAS Dor</h1>
+                <p class="text-xs text-galvao-sky">Galvão Ortopedia</p>
+            </div>
+        </header>
+
+        <!-- Screen: Onboarding -->
+        <div id="screen-onboarding" class="screen hidden flex-1 p-4 overflow-y-auto">
+            <div class="max-w-md mx-auto">
+                <div class="text-center mb-8 mt-4">
+                    <h2 class="text-2xl font-bold text-galvao-dark mb-4">Bem-vindo!</h2>
+                    <p class="text-gray-600 mb-4">Esta avaliação ajuda o Dr. Pedro a entender melhor sua dor.</p>
+                </div>
+
+                <div class="bg-white rounded-lg p-6 shadow mb-6">
+                    <h3 class="text-lg font-bold text-galvao-dark mb-4">O que é a Escala VAS?</h3>
+                    <p class="text-sm text-gray-700 mb-4">
+                        A Escala de Dor Visual Analógica (VAS) mede a intensidade da sua dor de <strong>0 a 10</strong>:
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li><strong>0:</strong> Sem dor nenhuma 😊</li>
+                        <li><strong>5:</strong> Dor moderada 😐</li>
+                        <li><strong>10:</strong> Dor insuportável 😭</li>
+                    </ul>
+                </div>
+
+                <div class="bg-galvao-sky bg-opacity-10 rounded-lg p-4 mb-6 border-l-4 border-galvao-sky">
+                    <p class="text-sm text-gray-700">
+                        <strong>Dica:</strong> Seja honesto sobre sua dor. Isso ajuda Dr. Pedro a prescrever o melhor tratamento.
+                    </p>
+                </div>
+
+                <button onclick="switchScreen('consent')" class="w-full bg-galvao-dark text-white py-3 rounded-lg font-bold text-lg hover:bg-opacity-90 transition">
+                    Começar Avaliação
+                </button>
+            </div>
+        </div>
+
+        <!-- Screen: Consent -->
+        <div id="screen-consent" class="screen hidden flex-1 p-4 overflow-y-auto">
+            <div class="max-w-md mx-auto">
+                <div class="mb-6">
+                    <h2 class="text-xl font-bold text-galvao-dark mb-4">Consentimento de Dados</h2>
+                </div>
+
+                <div class="bg-white rounded-lg p-6 shadow mb-6">
+                    <div class="space-y-4 text-sm text-gray-700">
+                        <p><strong>📋 Como seus dados serão usados:</strong></p>
+                        <ul class="list-disc list-inside space-y-2 ml-2">
+                            <li>Seus dados de dor serão armazenados com segurança</li>
+                            <li>Você pode solicitar exclusão a qualquer momento</li>
+                            <li>Nenhum dado será compartilhado sem seu consentimento</li>
+                            <li>Galvão Ortopedia segue a Lei Geral de Proteção de Dados (LGPD)</li>
+                        </ul>
+                        <p class="mt-4 border-t pt-4">
+                            <strong>Dúvidas?</strong> Fale com a Dra./Dr. Pedro ou nossa equipe de recepção.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-3 mb-6">
+                    <input type="checkbox" id="consent-checkbox" class="mt-1 w-5 h-5 cursor-pointer">
+                    <label for="consent-checkbox" class="text-sm text-gray-700">
+                        Eu concordo com a coleta e armazenamento seguro dos meus dados conforme descrito acima.
+                    </label>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="switchScreen('onboarding')" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-400 transition">
+                        Voltar
+                    </button>
+                    <button onclick="switchScreen('patient-form')" class="flex-1 bg-galvao-dark text-white py-3 rounded-lg font-bold hover:bg-opacity-90 transition" id="consent-next">
+                        Próximo
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screen: Patient Form -->
+        <div id="screen-patient-form" class="screen hidden flex-1 p-4 overflow-y-auto">
+            <div class="max-w-md mx-auto">
+                <h2 class="text-xl font-bold text-galvao-dark mb-6">Seus Dados</h2>
+
+                <div class="bg-white rounded-lg p-6 shadow space-y-4">
+                    <div>
+                        <label class="block text-sm font-bold text-galvao-dark mb-2">Nome *</label>
+                        <input type="text" id="patient-name" placeholder="Seu nome completo" class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-galvao-sky">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-galvao-dark mb-2">Idade *</label>
+                        <input type="number" id="patient-age" placeholder="Ex: 35" min="1" max="120" class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-galvao-sky">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-galvao-dark mb-2">Gênero (opcional)</label>
+                        <select id="patient-gender" class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-galvao-sky">
+                            <option value="">Preferir não informar</option>
+                            <option value="M">Masculino</option>
+                            <option value="F">Feminino</option>
+                            <option value="O">Outro</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex gap-3">
+                    <button onclick="switchScreen('consent')" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-400 transition">
+                        Voltar
+                    </button>
+                    <button onclick="switchScreen('vas')" class="flex-1 bg-galvao-dark text-white py-3 rounded-lg font-bold hover:bg-opacity-90 transition">
+                        Próximo
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screen: VAS Main -->
+        <div id="screen-vas" class="screen hidden flex-1 p-4 overflow-y-auto">
+            <div class="max-w-md mx-auto">
+                <h2 class="text-xl font-bold text-galvao-dark mb-4">Qual é sua dor geral agora?</h2>
+
+                <!-- VAS Gradient Bar -->
+                <div class="bg-white rounded-lg p-6 shadow mb-6">
+                    <div class="vas-gradient h-4 rounded-full mb-4"></div>
+                    <p class="text-center text-xs text-gray-600 mb-4">Arraste ou toque para avaliar</p>
+
+                    <!-- Emoji + Big Score -->
+                    <div class="text-center mb-6">
+                        <div class="text-6xl mb-2" id="emoji-display">😊</div>
+                        <div class="text-5xl font-bold text-galvao-sky" id="vas-score-display">0</div>
+                        <p class="text-gray-600 text-sm">/ 10</p>
+                    </div>
+
+                    <!-- VAS Slider Canvas -->
+                    <canvas id="vas-canvas" width="300" height="80" class="w-full border border-gray-300 rounded-lg bg-white" style="max-width: 100%; height: auto;"></canvas>
+                </div>
+
+                <!-- Notes -->
+                <div class="bg-white rounded-lg p-4 shadow mb-6">
+                    <label class="block text-sm font-bold text-galvao-dark mb-2">Notas (opcional)</label>
+                    <textarea id="general-notes" placeholder="Ex: Piora à noite, melhor quando deitado..." class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-galvao-sky text-sm" rows="3"></textarea>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="switchScreen('patient-form')" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-400 transition">
+                        Voltar
+                    </button>
+                    <button onclick="switchScreen('body')" class="flex-1 bg-galvao-dark text-white py-3 rounded-lg font-bold hover:bg-opacity-90 transition">
+                        Próximo
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screen: Body Diagram -->
+        <div id="screen-body" class="screen hidden flex-1 p-4 overflow-y-auto">
+            <div class="max-w-md mx-auto">
+                <h2 class="text-xl font-bold text-galvao-dark mb-4">Onde dói?</h2>
+                <p class="text-sm text-gray-600 mb-4">Toque nas regiões do corpo para adicionar uma nota de dor.</p>
+
+                <div class="bg-white rounded-lg p-4 shadow mb-6">
+                    <!-- Simple Body Diagram -->
+                    <svg id="body-diagram" viewBox="0 0 200 400" class="w-full max-w-sm mx-auto" style="border: 1px solid #ddd; border-radius: 8px;">
+                        <!-- Head -->
+                        <circle cx="100" cy="40" r="25" class="body-region body-region-hover" data-region="cabeça" stroke="#999" stroke-width="2"/>
+                        
+                        <!-- Neck -->
+                        <rect x="95" y="65" width="10" height="15" class="body-region body-region-hover" data-region="pescoço" stroke="#999" stroke-width="2"/>
+                        
+                        <!-- Shoulders -->
+                        <rect x="60" y="80" width="20" height="15" class="body-region body-region-hover" data-region="ombro esquerdo" stroke="#999" stroke-width="2"/>
+                        <rect x="120" y="80" width="20" height="15" class="body-region body-region-hover" data-region="ombro direito" stroke="#999" stroke-width="2"/>
+                        
+                        <!-- Chest -->
+                        <rect x="80" y="100" width="40" height="30" class="body-region body-region-hover" data-region="peito" stroke="#999" stroke-width="2"/>
+                        
+                        <!-- Upper Arms -->
+                        <rect x="50" y="100" width="15" height="40" class="body-region body-region-hover" data-region="braço esquerdo" stroke="#999" stroke-width="2"/>
+                        <rect x="135" y="100" width="15" height="40" class="body-region body-region-hover" data-region="braço direito" stroke="#999" stroke-width="2"/>
+                        
+                        <!-- Forearms/Wrists -->
+                        <rect x="50" y="140" width="15" height="35" class="body-region body-region-hover" data-region="punho esquerdo" stroke="#999" stroke-width="2"/>
+                        <rect x="135" y="140" width="15" height="35" class="body-region body-region-hover" data-region="punho direito" stroke="#999" stroke-width="2"/>
+                        
+                        <!-- Abdomen -->
+                        <rect x="80" y="130" width="40" height="40" class="body-region body-region-hover" data-region="abdômen" stroke="#999" stroke-width="2"/>
+                        
+                        <!-- Lower Back (behind) -->
+                        <rect x="80" y="170" width="40" height="40" class="body-region body-region-hover" data-region="costas" stroke="#999" stroke-width="2"/>
+                        
+                        <!-- Hips -->
+                        <rect x="65" y="210" width="15" height="25" class="body-region body-region-hover" data-region="quadril esquerdo" stroke="#999" stroke-width="2"/>
+                        <rect x="120" y="210" width="15" height="25" class="body-region body-region-hover" data-region="quadril direito" stroke="#999" stroke-width="2"/>
+                        
+                        <!-- Thighs/Knees -->
+                        <rect x="65" y="235" width="15" height="50" class="body-region body-region-hover" data-region="joelho esquerdo" stroke="#999" stroke-width="2"/>
+                        <rect x="120" y="235" width="15" height="50" class="body-region body-region-hover" data-region="joelho direito" stroke="#999" stroke-width="2"/>
+                        
+                        <!-- Lower Legs -->
+                        <rect x="65" y="285" width="15" height="50" class="body-region body-region-hover" data-region="perna esquerda" stroke="#999" stroke-width="2"/>
+                        <rect x="120" y="285" width="15" height="50" class="body-region body-region-hover" data-region="perna direita" stroke="#999" stroke-width="2"/>
+                        
+                        <!-- Feet -->
+                        <rect x="65" y="335" width="15" height="25" class="body-region body-region-hover" data-region="pé esquerdo" stroke="#999" stroke-width="2"/>
+                        <rect x="120" y="335" width="15" height="25" class="body-region body-region-hover" data-region="pé direito" stroke="#999" stroke-width="2"/>
+                    </svg>
+                </div>
+
+                <!-- Selected Regions List -->
+                <div id="selected-regions-list" class="bg-white rounded-lg p-4 shadow mb-6">
+                    <p class="text-sm font-bold text-galvao-dark mb-2">Regiões selecionadas:</p>
+                    <div id="regions-container" class="space-y-2 min-h-8">
+                        <p class="text-xs text-gray-500">Nenhuma região selecionada</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="switchScreen('vas')" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-400 transition">
+                        Voltar
+                    </button>
+                    <button onclick="switchScreen('review')" class="flex-1 bg-galvao-dark text-white py-3 rounded-lg font-bold hover:bg-opacity-90 transition">
+                        Próximo
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screen: Review & Submit -->
+        <div id="screen-review" class="screen hidden flex-1 p-4 overflow-y-auto">
+            <div class="max-w-md mx-auto">
+                <h2 class="text-xl font-bold text-galvao-dark mb-4">Revise seus dados</h2>
+
+                <div class="bg-white rounded-lg p-4 shadow mb-4 space-y-3">
+                    <div>
+                        <p class="text-xs font-bold text-gray-600">NOME</p>
+                        <p id="review-name" class="text-lg text-galvao-dark font-semibold"></p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-600">IDADE</p>
+                        <p id="review-age" class="text-lg text-galvao-dark font-semibold"></p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-600">DOR GERAL</p>
+                        <p id="review-vas" class="text-2xl text-galvao-sky font-bold"></p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-600">REGIÕES COM DOR</p>
+                        <p id="review-regions" class="text-sm text-galvao-dark"></p>
+                    </div>
+                </div>
+
+                <div id="submit-message" class="text-center mb-6 hidden">
+                    <p class="text-sm text-green-600 font-bold">✅ Medição salva com sucesso!</p>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="switchScreen('body')" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-400 transition" id="review-back">
+                        Voltar
+                    </button>
+                    <button onclick="submitMeasurement()" class="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition" id="submit-btn">
+                        💾 Salvar Medição
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screen: History -->
+        <div id="screen-history" class="screen hidden flex-1 p-4 overflow-y-auto">
+            <div class="max-w-md mx-auto">
+                <h2 class="text-xl font-bold text-galvao-dark mb-4">Histórico</h2>
+                <div id="history-list" class="space-y-3">
+                    <p class="text-gray-500 text-sm">Nenhuma medição salva ainda.</p>
+                </div>
+
+                <div class="mt-6 flex gap-3">
+                    <button onclick="exportCSV()" class="flex-1 bg-galvao-sky text-white py-3 rounded-lg font-bold hover:bg-opacity-90 transition">
+                        📥 Exportar CSV
+                    </button>
+                    <button onclick="switchScreen('onboarding')" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-400 transition">
+                        Voltar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

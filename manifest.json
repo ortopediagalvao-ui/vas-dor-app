@@ -1,0 +1,33 @@
+{
+  "name": "VAS Dor - Galvão Ortopedia",
+  "short_name": "VAS Dor",
+  "description": "Avaliação de dor com Escala Visual Analógica",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#044767",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23044767' width='192' height='192'/><text x='96' y='120' font-size='80' font-weight='bold' fill='white' text-anchor='middle' font-family='sans-serif'>VAS</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23044767' width='192' height='192' rx='45'/><text x='96' y='120' font-size='80' font-weight='bold' fill='white' text-anchor='middle' font-family='sans-serif'>VAS</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["medical", "health"],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 720'><rect fill='%23F5F5F5' width='540' height='720'/><rect fill='%23044767' width='540' height='80'/><text x='270' y='45' font-size='32' font-weight='bold' fill='white' text-anchor='middle' font-family='sans-serif'>VAS Dor</text></svg>",
+      "sizes": "540x720",
+      "type": "image/svg+xml"
+    }
+  ]
+}
