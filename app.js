@@ -1,6 +1,6 @@
 // ===== CONFIGURATION =====
-// Replace this with your actual Formspree Form ID from Step 1
-const FORMSPREE_FORM_ID = 'mdabagdv'; // Pedro's Galvão Ortopedia Form
+// Google Apps Script webhook - posts directly to Google Sheet
+const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyahmtTqaNNZKxHI7Qhur2YE1DV8jktuboJ-4e5OpCncHOjCv0lXv0MLMS3lA1_NYh6/exec';
 
 // ===== STATE MANAGEMENT =====
 let appState = {
@@ -88,111 +88,33 @@ function setupConsentListener() {
     });
 }
 
-// ===== VAS SLIDER (Canvas-based) =====
+// ===== VAS SLIDER (HTML5 Range Input - Mobile Friendly) =====
 function initVASCanvas() {
-    const canvas = document.getElementById('vas-canvas');
-    const ctx = canvas.getContext('2d');
-    
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
-    
-    let isDragging = false;
-    
-    function drawVAS() {
-        const w = canvas.offsetWidth;
-        const h = canvas.offsetHeight;
-        ctx.clearRect(0, 0, w, h);
-        
-        // Draw track
-        const trackY = h / 2;
-        const trackStart = 30;
-        const trackEnd = w - 30;
-        
-        ctx.strokeStyle = '#ddd';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(trackStart, trackY);
-        ctx.lineTo(trackEnd, trackY);
-        ctx.stroke();
-        
-        // Draw circle (thumb)
-        const percent = appState.vasScore / 10;
-        const circleX = trackStart + (trackEnd - trackStart) * percent;
-        const circleY = trackY;
-        const circleRadius = 16;
-        
-        ctx.fillStyle = isDragging ? '#27AAE1' : '#044767';
-        ctx.beginPath();
-        ctx.arc(circleX, circleY, circleRadius, 0, Math.PI * 2);
-        ctx.fill();
-        
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 12px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(appState.vasScore, circleX, circleY);
-        
-        // Draw tick marks
-        ctx.strokeStyle = '#999';
-        ctx.lineWidth = 1;
-        for (let i = 0; i <= 10; i++) {
-            const x = trackStart + (trackEnd - trackStart) * (i / 10);
-            ctx.beginPath();
-            ctx.moveTo(x, trackY - 8);
-            ctx.lineTo(x, trackY + 8);
-            ctx.stroke();
-        }
+    const vasInput = document.getElementById('vas-input');
+    if (!vasInput) {
+        console.warn('VAS slider input not found in DOM');
+        return;
     }
-    
+
+    const emojis = ['😊', '😌', '😐', '😕', '😟', '😣', '😤', '😫', '😩', '😭', '😭'];
+
     function updateEmojiAndScore() {
-        const emojis = ['😊', '😌', '😐', '😕', '😟', '😣', '😤', '😫', '😩', '😭', '😭'];
-        document.getElementById('emoji-display').textContent = emojis[appState.vasScore];
-        document.getElementById('vas-score-display').textContent = appState.vasScore;
+        const score = parseInt(vasInput.value) || 0;
+        appState.vasScore = score;
+        document.getElementById('emoji-display').textContent = emojis[score];
+        document.getElementById('vas-score-display').textContent = score;
     }
-    
-    canvas.addEventListener('mousedown', (e) => {
-        isDragging = true;
-        updateVASFromEvent(e);
-    });
-    
-    canvas.addEventListener('mousemove', (e) => {
-        if (isDragging) updateVASFromEvent(e);
-    });
-    
-    canvas.addEventListener('mouseup', () => {
-        isDragging = false;
-        drawVAS();
-    });
-    
-    canvas.addEventListener('touchstart', (e) => {
-        isDragging = true;
-        updateVASFromEvent(e.touches[0]);
-    });
-    
-    canvas.addEventListener('touchmove', (e) => {
-        if (isDragging) updateVASFromEvent(e.touches[0]);
-    });
-    
-    canvas.addEventListener('touchend', () => {
-        isDragging = false;
-        drawVAS();
-    });
-    
-    function updateVASFromEvent(e) {
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const trackStart = 30;
-        const trackEnd = rect.width - 30;
-        const percent = Math.max(0, Math.min(1, (x - trackStart) / (trackEnd - trackStart)));
-        appState.vasScore = Math.round(percent * 10);
-        updateEmojiAndScore();
-        drawVAS();
+
+    // Sync visual state with current appState (handles reset + first load)
+    vasInput.value = appState.vasScore || 0;
+
+    // Attach listeners only once (idempotent across resetApp() calls)
+    if (!vasInput.dataset.listenersAttached) {
+        vasInput.addEventListener('input', updateEmojiAndScore);
+        vasInput.addEventListener('change', updateEmojiAndScore);
+        vasInput.dataset.listenersAttached = 'true';
     }
-    
-    drawVAS();
+
     updateEmojiAndScore();
 }
 
@@ -283,35 +205,31 @@ async function submitMeasurement() {
     appState.measurements.push(measurement);
     saveToLocalStorage();
     
-    // Try to send to Formspree
-    if (FORMSPREE_FORM_ID !== 'YOUR_FORMSPREE_ID_HERE') {
-        try {
-            const response = await fetch(`https://formspree.io/f/${FORMSPREE_FORM_ID}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    'timestamp': measurement.timestamp,
-                    'tracking_id': measurement.trackingId,
-                    'name': measurement.name,
-                    'age': measurement.age,
-                    'gender': measurement.gender,
-                    'vas_general': measurement.vasGeneral,
-                    'regions': measurement.regions,
-                    'notes': measurement.notes,
-                    'consent': measurement.consent ? 'Sim' : 'Não'
-                })
-            });
-            
-            if (response.ok) {
-                console.log('Data sent to Formspree!');
-            } else {
-                console.log('Formspree error, but data saved locally');
-            }
-        } catch (e) {
-            console.log('Network error, data saved locally:', e);
+    // Try to send to Google Apps Script (which writes to Google Sheet)
+    try {
+        const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                'timestamp': measurement.timestamp,
+                'tracking_id': measurement.trackingId,
+                'name': measurement.name,
+                'age': measurement.age,
+                'gender': measurement.gender,
+                'vas_general': measurement.vasGeneral,
+                'regions': measurement.regions,
+                'notes': measurement.notes,
+                'consent': measurement.consent ? 'Sim' : 'Não'
+            })
+        });
+        
+        if (response.ok) {
+            console.log('Data sent to Google Sheet!');
+        } else {
+            console.log('Google Sheets error, but data saved locally');
         }
-    } else {
-        console.log('Formspree ID not configured. Data saved locally.');
+    } catch (e) {
+        console.log('Network error, data saved locally:', e);
     }
     
     // Show success message
