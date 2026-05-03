@@ -1,6 +1,7 @@
 // ===== CONFIGURATION =====
 // Google Apps Script webhook - posts directly to Google Sheet
 const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwTdb9bnlhWawRgHGoRXy9GD3EbSjzeY4kjwtyj__z5n70nqr17lSrlsDjD5DVcI3Y/exec';
+
 // ===== STATE MANAGEMENT =====
 let appState = {
     currentScreen: 'onboarding',
