@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vas-dor-v4';
+const CACHE_NAME = 'vas-dor-v5';
 const urlsToCache = [
   '/',
   '/index.html',
