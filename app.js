@@ -223,7 +223,7 @@ async function submitMeasurement() {
     try {
         const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({
                 'timestamp': measurement.timestamp,
                 'tracking_id': measurement.trackingId,
